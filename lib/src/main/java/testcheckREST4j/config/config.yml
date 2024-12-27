@@ -1,0 +1,7 @@
+faults:
+  - NullFieldFault
+  - MissingFieldFault
+  - InvalidDataTypeFault
+report:
+  format: html
+  output: "./reports/simulator-report.html"
