@@ -1,0 +1,11 @@
+<aspectj>
+    <weaver>
+        <!-- Include all classes for weaving -->
+        <include within="*" />
+    </weaver>
+    <aspects>
+        <aspect name="aop.ApiInterceptorAspect" />
+        <aspect name="aop.JUnitInterceptor" />
+        <aspect name="aop.AssertionsInterceptorAspect" />
+    </aspects>
+</aspectj>
