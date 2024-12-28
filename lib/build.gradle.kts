@@ -27,14 +27,20 @@ dependencies {
     implementation("io.rest-assured:json-path:5.3.0")
     compileOnly("org.aspectj:aspectjtools:1.9.7")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.2")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
     compileOnly("org.junit.jupiter:junit-jupiter-api:5.6.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    implementation("org.junit.platform:junit-platform-launcher:1.9.3")
     api("org.apache.commons:commons-math3:3.6.1")
     implementation("com.google.guava:guava:29.0-jre")
     implementation("org.slf4j:slf4j-api:2.0.9")
+    implementation("org.slf4j:slf4j-simple:1.7.36")
     compileOnly("org.projectlombok:lombok:1.18.36")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
-    implementation("org.json:json:20230227") // JSON processing library
+    implementation("org.json:json:20230227")
+    // https://mvnrepository.com/artifact/com.github.tomakehurst/wiremock
+    implementation("com.github.tomakehurst:wiremock:3.0.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
 }
 
 tasks.test {
@@ -43,7 +49,7 @@ tasks.test {
             "-javaagent:${configurations.compileClasspath.get().find { it.name.contains("aspectjweaver") }?.absolutePath}",
 //            "-Daj.weaving.verbose=true",
 //            "-Dorg.aspectj.weaver.showWeaveInfo=true",
-//            "-Dorg.aspectj.matcher.verbosity=5"
+//            "-Dorg.aspectj.matcher.verbosity=5",
             "-Xmx2g", // Increase maximum heap size to 2GB
             "-Xms512m" // Set initial heap size to 512MB
     )
