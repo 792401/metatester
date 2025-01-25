@@ -1,4 +1,4 @@
-package testcheckREST4j.runner;
+package metatester.runner;
 
 public class FaultSimulationRunner {
 }

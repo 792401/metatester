@@ -5,6 +5,24 @@
  * For more details take a look at the 'Building Java & JVM projects' chapter in the Gradle
  * User Manual available at https://docs.gradle.org/6.9.1/userguide/building_java_projects.html
  */
+
+group "io.metatester"
+version "1.0.0"
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            groupId = "io.metatester"
+            artifactId = "metatester4rj"
+            version = "1.0.0"
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
@@ -12,6 +30,7 @@ java {
 
 plugins {
     `java-library`
+    `maven-publish`
     id("io.freefair.aspectj.post-compile-weaving") version "8.6"
 }
 
@@ -22,7 +41,7 @@ repositories {
 dependencies {
     testImplementation(project(":lib"))
     implementation("org.aspectj:aspectjrt:1.9.22")
-    implementation("org.aspectj:aspectjweaver:1.9.22")
+    api("org.aspectj:aspectjweaver:1.9.22")
     implementation("io.rest-assured:rest-assured:5.3.0")
     implementation("io.rest-assured:json-path:5.3.0")
     compileOnly("org.aspectj:aspectjtools:1.9.7")
@@ -38,7 +57,6 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.36")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
     implementation("org.json:json:20230227")
-    // https://mvnrepository.com/artifact/com.github.tomakehurst/wiremock
     implementation("com.github.tomakehurst:wiremock:3.0.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
 }

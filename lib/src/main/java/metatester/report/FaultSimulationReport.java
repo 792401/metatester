@@ -1,4 +1,4 @@
-package testcheckREST4j.report;
+package metatester.report;
 
 public class FaultSimulationReport {
 }

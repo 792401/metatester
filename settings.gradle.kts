@@ -7,5 +7,5 @@
  * in the user manual at https://docs.gradle.org/6.9.1/userguide/multi_project_builds.html
  */
 
-rootProject.name = "testcheckREST4j"
+rootProject.name = "metatester4rj"
 include("lib")

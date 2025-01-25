@@ -16,7 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 
 @Aspect
-public class CombinedInterceptorAspect {
+public class AspectExecutor {
     private String interceptedUrl;
     private String originalResponse = null;
     private boolean firstRun = true;
@@ -35,7 +35,7 @@ public class CombinedInterceptorAspect {
             firstRun = false;
             System.out.println("First run completed. Original response captured.");
         }
-        executeWithMutations(joinPoint);
+        executeWithSimulatedFaults(joinPoint);
 
         return result;
     }
@@ -72,7 +72,7 @@ public class CombinedInterceptorAspect {
                 // Reassign the entity for reuse during reruns
                 response.setEntity(new StringEntity(originalResponse));
             } else {
-                System.out.println("Rerun response intercepted (mutation applied).");
+                System.out.println("Rerun response intercepted (simulated fault applied).");
             }
         }
 
@@ -118,49 +118,49 @@ public class CombinedInterceptorAspect {
         return result;
     }
 
-    private void executeWithMutations(ProceedingJoinPoint joinPoint) throws Throwable {
-        System.out.println("Executing test reruns with mutated responses...");
-        for (int mutationIndex = 0; mutationIndex < 2; mutationIndex++) {
-            System.out.println("Setting up mutation #" + mutationIndex);
-            setMutation(mutationIndex);
+    private void executeWithSimulatedFaults(ProceedingJoinPoint joinPoint) throws Throwable {
+        System.out.println("Executing test reruns with simulated fault responses...");
+        for (int simulatedFaultIndex = 0; simulatedFaultIndex < 2; simulatedFaultIndex++) {
+            System.out.println("Setting up simulated fault #" + simulatedFaultIndex);
+            setSimulatedFault(simulatedFaultIndex);
 
-            System.out.println("Executing test with mutation #" + mutationIndex);
+            System.out.println("Executing test with simulated fault #" + simulatedFaultIndex);
             try {
                 joinPoint.proceed();
-                System.err.println("[Fault not detected] Test passed for mutation #" + mutationIndex);
+                System.err.println("[Fault not detected] Test passed for simulated fault #" + simulatedFaultIndex);
             } catch (Throwable t) {
-                System.out.println("[Fault detected] Test failed for mutation #" + mutationIndex + ": " + t.getMessage());
+                System.out.println("[Fault detected] Test failed for simulated fault #" + simulatedFaultIndex + ": " + t.getMessage());
             }
         }
-        System.out.println("All test executions (original + mutations) are completed.");
+        System.out.println("All test executions (original + simulated faults) are completed.");
     }
 
 
 
-    private void setMutation(int mutationIndex) {
+    private void setSimulatedFault(int simulatedFaultIndex) {
         if (originalResponse == null) {
-            throw new IllegalStateException("Cannot create mutations because `originalResponse` is null.");
+            throw new IllegalStateException("Cannot create simulated fault because `originalResponse` is null.");
         }
 
         String currentResponse = originalResponse;
 
-        String mutatedResponse;
-        switch (mutationIndex) {
+        String responseWithSimulatedFault;
+        switch (simulatedFaultIndex) {
             case 0:
-                mutatedResponse = currentResponse.replaceAll("\"(\\w+)\":\\s?\"[^\"]*\"", "\"$1\": null");
+                responseWithSimulatedFault = currentResponse.replaceAll("\"(\\w+)\":\\s?\"[^\"]*\"", "\"$1\": null");
                 break;
             case 1:
-                mutatedResponse = currentResponse.replaceAll(":\\s?(\\d+)", ": 99999");
+                responseWithSimulatedFault = currentResponse.replaceAll(":\\s?(\\d+)", ": 99999");
                 break;
             default:
-                mutatedResponse = currentResponse;
+                responseWithSimulatedFault = currentResponse;
         }
 
-        System.out.println("Mutated response created: " + mutatedResponse);
-        injectMutatedResponse(mutatedResponse);
+        System.out.println("Simulated fault response created: " + responseWithSimulatedFault);
+        injectResponseWithSimulatedFault(responseWithSimulatedFault);
     }
 
-    private void injectMutatedResponse(String mutatedResponse) {
+    private void injectResponseWithSimulatedFault(String responseWithSimulatedFault) {
         if (interceptedUrl == null || interceptedUrl.isEmpty()) {
             throw new IllegalStateException("Intercepted URL is null or empty. Cannot set up WireMock stub.");
         }
@@ -171,7 +171,7 @@ public class CombinedInterceptorAspect {
         WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo(requestPath))
                 .willReturn(WireMock.aResponse()
                         .withHeader("Content-Type", "application/json")
-                        .withBody(mutatedResponse)
+                        .withBody(responseWithSimulatedFault)
                         .withStatus(200)));
     }
 

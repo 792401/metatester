@@ -1,4 +1,4 @@
-package testcheckREST4j.config;
+package metatester.config;
 
 public class SimulatorConfig {
 }

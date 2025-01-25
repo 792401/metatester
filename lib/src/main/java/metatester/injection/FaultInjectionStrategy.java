@@ -1,4 +1,4 @@
-package testcheckREST4j.injection;
+package metatester.injection;
 
 public class FaultInjectionStrategy {
 }

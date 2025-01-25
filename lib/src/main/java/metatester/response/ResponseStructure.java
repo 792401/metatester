@@ -1,4 +1,4 @@
-package testcheckREST4j.response;
+package metatester.response;
 
 public class ResponseStructure {
 }
