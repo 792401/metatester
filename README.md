@@ -2,4 +2,4 @@
 
 Verifies REST API automated tests reliability by simulating software faults
 
-Plug and play, does not require any changes on the test code base
+Plug and play using bytecode weaving, does not require any changes on the test code base.
