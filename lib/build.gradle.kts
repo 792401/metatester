@@ -58,7 +58,8 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.30")
     implementation("org.json:json:20230227")
     implementation("com.github.tomakehurst:wiremock:3.0.1")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.18.2")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
 }
 
 tasks.test {
