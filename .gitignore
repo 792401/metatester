@@ -17,7 +17,6 @@
 *.class
 
 # Ignore generated JARs, WARs, or archives
-*.jar
 *.war
 *.ear
 
