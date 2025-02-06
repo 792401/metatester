@@ -1,6 +1,12 @@
 package aop;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import metatester.config.SimulatorConfig;
+import metatester.report.FaultSimulationReport;
+import metatester.report.TestLevelSimulationResults;
 import okhttp3.Response;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -14,12 +20,19 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Aspect
 public class AspectExecutor {
     private String interceptedUrl;
     private String originalResponse = null;
+    private Map<String, Object> responseMap = new HashMap<>();
     private boolean firstRun = true;
+    private final List<String> faults = SimulatorConfig.getFaults();
+
+    private final FaultSimulationReport report = FaultSimulationReport.getInstance();
 
     @Around("execution(@org.junit.jupiter.api.Test * *(..))")
     public Object interceptTestMethod(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -35,7 +48,9 @@ public class AspectExecutor {
             firstRun = false;
             System.out.println("First run completed. Original response captured.");
         }
-        executeWithSimulatedFaults(joinPoint);
+        if(!SimulatorConfig.isTestExcluded(joinPoint.getSignature().getName())){
+            executeWithSimulatedFaults(joinPoint);
+        }
 
         return result;
     }
@@ -56,6 +71,7 @@ public class AspectExecutor {
 
                 HttpGet newRequest = new HttpGet(redirectedUri);
                 newRequest.setHeaders(originalRequest.getAllHeaders());
+
                 args[0] = newRequest;
             }
         }
@@ -67,9 +83,12 @@ public class AspectExecutor {
 
             if (firstRun) {
                 originalResponse = EntityUtils.toString(response.getEntity());
-                System.out.println("Original response intercepted: " + originalResponse);
 
-                // Reassign the entity for reuse during reruns
+                System.out.println("Original response intercepted: " + originalResponse);
+                ObjectMapper objectMapper = new ObjectMapper();
+                responseMap = objectMapper.readValue(originalResponse, new TypeReference<Map<String, Object>>() {});
+
+
                 response.setEntity(new StringEntity(originalResponse));
             } else {
                 System.out.println("Rerun response intercepted (simulated fault applied).");
@@ -78,7 +97,6 @@ public class AspectExecutor {
 
         return result;
     }
-
 
     @Around("execution(* okhttp3.Call.execute(..))")
     public Object interceptOkHttpClient(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -120,45 +138,56 @@ public class AspectExecutor {
 
     private void executeWithSimulatedFaults(ProceedingJoinPoint joinPoint) throws Throwable {
         System.out.println("Executing test reruns with simulated fault responses...");
-        for (int simulatedFaultIndex = 0; simulatedFaultIndex < 2; simulatedFaultIndex++) {
-            System.out.println("Setting up simulated fault #" + simulatedFaultIndex);
-            setSimulatedFault(simulatedFaultIndex);
 
-            System.out.println("Executing test with simulated fault #" + simulatedFaultIndex);
-            try {
-                joinPoint.proceed();
-                System.err.println("[Fault not detected] Test passed for simulated fault #" + simulatedFaultIndex);
-            } catch (Throwable t) {
-                System.out.println("[Fault detected] Test failed for simulated fault #" + simulatedFaultIndex + ": " + t.getMessage());
+        for(String field: responseMap.keySet()){
+            for(String fault: faults){
+                TestLevelSimulationResults testLevelSimulationResults = new TestLevelSimulationResults();
+                testLevelSimulationResults.setTest(joinPoint.getSignature().getName());
+                setFieldFault(field,fault);
+                System.out.println("Executing test with simulated fault: %s for field %s fault, field");
+                try {
+                    joinPoint.proceed();
+                    testLevelSimulationResults.setCaught(false);
+                    System.err.println("[FAULT NOT DETECTED] Test passed for simulated fault "+ fault + " for field " + field);
+                } catch (Throwable t) {
+                    testLevelSimulationResults.setCaught(true);
+                    testLevelSimulationResults.setError(t.getMessage());
+                    System.out.println("[FAULT DETECTED] Test failed for simulated fault " + fault + " for field " + field);
+                    System.out.println("[FAIL ERROR]: " + t.getMessage());
+                }
+                report.setEndpoint(URI.create(interceptedUrl).getPath())
+                      .setTestResult(testLevelSimulationResults)
+                      .setField(field)
+                      .setFaultType(fault)
+                      .apply();
             }
         }
+
         System.out.println("All test executions (original + simulated faults) are completed.");
     }
 
-
-
-    private void setSimulatedFault(int simulatedFaultIndex) {
+    private void setFieldFault(String field, String fault){
         if (originalResponse == null) {
             throw new IllegalStateException("Cannot create simulated fault because `originalResponse` is null.");
         }
 
-        String currentResponse = originalResponse;
-
-        String responseWithSimulatedFault;
-        switch (simulatedFaultIndex) {
-            case 0:
-                responseWithSimulatedFault = currentResponse.replaceAll("\"(\\w+)\":\\s?\"[^\"]*\"", "\"$1\": null");
-                break;
-            case 1:
-                responseWithSimulatedFault = currentResponse.replaceAll(":\\s?(\\d+)", ": 99999");
-                break;
-            default:
-                responseWithSimulatedFault = currentResponse;
+        Map<String, Object> currentResponse = new HashMap<>(responseMap);
+        switch (fault) {
+            case "null_field" -> currentResponse.put(field, null);
+            case "missing_field" -> currentResponse.remove(field);
+            default -> currentResponse = currentResponse;
         }
+        ObjectMapper objectMapper = new ObjectMapper();
 
-        System.out.println("Simulated fault response created: " + responseWithSimulatedFault);
-        injectResponseWithSimulatedFault(responseWithSimulatedFault);
+        try {
+            String responseAsString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(currentResponse);
+            System.out.println("Simulated fault response created: " + responseAsString);
+            injectResponseWithSimulatedFault(responseAsString);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
+
 
     private void injectResponseWithSimulatedFault(String responseWithSimulatedFault) {
         if (interceptedUrl == null || interceptedUrl.isEmpty()) {
