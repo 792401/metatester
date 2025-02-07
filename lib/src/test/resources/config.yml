@@ -20,7 +20,8 @@ endpoints:
     - '*/login*'
 tests:
   exclude:
-    - '*login*'  
+    - '*login*'
+
 report:
   format: html
   output_path: "./reports/simulator-report.html"

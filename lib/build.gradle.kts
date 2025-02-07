@@ -44,8 +44,10 @@ dependencies {
     api("org.aspectj:aspectjweaver:1.9.22")
     implementation("io.rest-assured:rest-assured:5.3.0")
     implementation("io.rest-assured:json-path:5.3.0")
-    compileOnly("org.aspectj:aspectjtools:1.9.7")
+    testImplementation("org.projectlombok:lombok:1.18.26")
+    compileOnly("org.aspectj:aspectjtools:1.9.22")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.2")
+    testImplementation("org.junit.platform:junit-platform-launcher:1.11.4")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     compileOnly("org.junit.jupiter:junit-jupiter-api:5.6.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
@@ -62,14 +64,28 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
 }
 
+
+//tasks.test {
+//    useJUnitPlatform()
+//    jvmArgs(
+//            "-javaagent:${configurations.compileClasspath.get().find { it.name.contains("aspectjweaver") }?.absolutePath}",
+////            "-Daj.weaving.verbose=true",
+////            "-Dorg.aspectj.weaver.showWeaveInfo=true",
+////            "-Dorg.aspectj.matcher.verbosity=5",
+//            "-Xmx2g", // Increase maximum heap size to 2GB
+//            "-Xms512m" // Set initial heap size to 512MB
+//    )
+//}
 tasks.test {
     useJUnitPlatform()
-    jvmArgs(
-            "-javaagent:${configurations.compileClasspath.get().find { it.name.contains("aspectjweaver") }?.absolutePath}",
+    doFirst {
+        jvmArgs(
+            "-javaagent:${configurations.runtimeClasspath.get().find { it.name.contains("aspectjweaver") }?.absolutePath}",
 //            "-Daj.weaving.verbose=true",
 //            "-Dorg.aspectj.weaver.showWeaveInfo=true",
 //            "-Dorg.aspectj.matcher.verbosity=5",
-            "-Xmx2g", // Increase maximum heap size to 2GB
-            "-Xms512m" // Set initial heap size to 512MB
-    )
+            "-Xmx2g",
+            "-Xms512m"
+        )
+    }
 }

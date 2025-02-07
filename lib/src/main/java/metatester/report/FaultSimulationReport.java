@@ -17,27 +17,11 @@ public class FaultSimulationReport {
     private final Map<String, Object> report = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private FaultSimulationReport() {
-        loadExistingReport();
-    }
 
     public static FaultSimulationReport getInstance() {
         return INSTANCE;
     }
 
-    private void loadExistingReport() {
-        File reportFile = new File(DEFAULT_REPORT_PATH);
-        if (reportFile.exists()) {
-            try {
-                Map<String, Object> existingReport = objectMapper.readValue(reportFile, Map.class);
-                if (existingReport != null) {
-                    report.putAll(existingReport);
-                }
-            } catch (IOException e) {
-                System.err.println("Failed to load existing report: " + e.getMessage());
-            }
-        }
-    }
 
     public FaultSimulationReport setEndpoint(String endpoint) {
         if (endpoint == null || endpoint.trim().isEmpty()) {
@@ -113,6 +97,8 @@ public class FaultSimulationReport {
 
     private void saveReport() {
         try {
+            File reportFile = new File(DEFAULT_REPORT_PATH);
+            if (reportFile.exists()) reportFile.delete();
             objectMapper.writerWithDefaultPrettyPrinter()
                     .writeValue(new File(DEFAULT_REPORT_PATH), report);
         } catch (IOException e) {
