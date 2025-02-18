@@ -7,19 +7,25 @@
  */
 
 group "io.metatester"
-version "1.0.0"
 
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
             groupId = "io.metatester"
-            artifactId = "metatester4rj"
-            version = "1.0.0"
+            artifactId = "metatester"
+            version = "1.0.0-dev-1"
         }
     }
     repositories {
-        mavenLocal()
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/792401/metatester")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }
 
