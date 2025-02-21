@@ -5,6 +5,23 @@
  * For more details take a look at the 'Building Java & JVM projects' chapter in the Gradle
  * User Manual available at https://docs.gradle.org/6.9.1/userguide/building_java_projects.html
  */
+import org.gradle.api.provider.Provider
+import org.gradle.kotlin.dsl.*
+import java.io.ByteArrayOutputStream
+
+
+val gitCommitHash: Provider<String> = project.provider {
+    try {
+        val process = ProcessBuilder("git", "rev-parse", "--short=7", "HEAD").start()
+        val outputStream = ByteArrayOutputStream()
+        process.inputStream.copyTo(outputStream)
+        process.waitFor()
+        outputStream.toString().trim()
+    } catch (e: Exception) {
+        println("Error getting git commit hash: ${e.message}")
+        "unknown"
+    }
+}
 
 group "io.metatester"
 
@@ -14,7 +31,7 @@ publishing {
             from(components["java"])
             groupId = "io.metatester"
             artifactId = "metatester"
-            version = "1.0.0-dev-1"
+            version = if (gitCommitHash.get() != "unknown") "1.0.0-dev-${gitCommitHash.get()}" else "1.0.0-SNAPSHOT"
         }
     }
     repositories {
@@ -59,12 +76,11 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     implementation("org.junit.platform:junit-platform-launcher:1.9.3")
     api("org.apache.commons:commons-math3:3.6.1")
-    implementation("com.google.guava:guava:29.0-jre")
     implementation("org.slf4j:slf4j-api:2.0.9")
     implementation("org.slf4j:slf4j-simple:1.7.36")
     compileOnly("org.projectlombok:lombok:1.18.36")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
-    implementation("org.json:json:20230227")
+    implementation("org.json:json:20250107")
     implementation("com.github.tomakehurst:wiremock:3.0.1")
     implementation("com.fasterxml.jackson.core:jackson-core:2.18.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
