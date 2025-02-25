@@ -84,6 +84,7 @@ dependencies {
     implementation("com.github.tomakehurst:wiremock:3.0.1")
     implementation("com.fasterxml.jackson.core:jackson-core:2.18.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
+    implementation("io.swagger.parser.v3:swagger-parser:2.1.22")
 }
 
 

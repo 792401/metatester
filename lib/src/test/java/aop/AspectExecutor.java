@@ -2,6 +2,7 @@ package aop;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import metatester.config.SimulatorConfig;
@@ -10,11 +11,13 @@ import metatester.report.TestLevelSimulationResults;
 import okhttp3.Response;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import metatester.schemacoverage.Logger;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -59,15 +62,19 @@ public class AspectExecutor {
     public Object interceptApacheHttpClient(ProceedingJoinPoint joinPoint) throws Throwable {
         Object[] args = joinPoint.getArgs();
 
-        if (args.length > 0 && args[0] instanceof HttpGet) {
-            HttpGet originalRequest = (HttpGet) args[0];
+        if (args.length > 0 && args[0] instanceof HttpRequestBase) {
+            HttpRequestBase originalRequest = (HttpRequestBase) args[0];
             interceptedUrl = originalRequest.getURI().toString();
+            originalRequest.getAllHeaders();
             System.out.println("Intercepted URL: " + interceptedUrl);
-
+            if(firstRun){
+                Logger.parseResponse(originalRequest);
+            }
             if (!firstRun) {
                 URI originalUri = new URI(interceptedUrl);
                 URI redirectedUri = new URI("http", null, "localhost", 8080, originalUri.getPath(), originalUri.getQuery(), null);
                 System.out.println("Redirecting request to: " + redirectedUri);
+
 
                 HttpGet newRequest = new HttpGet(redirectedUri);
                 newRequest.setHeaders(originalRequest.getAllHeaders());
@@ -82,12 +89,20 @@ public class AspectExecutor {
             HttpResponse response = (HttpResponse) result;
 
             if (firstRun) {
+
                 originalResponse = EntityUtils.toString(response.getEntity());
 
                 System.out.println("Original response intercepted: " + originalResponse);
-                ObjectMapper objectMapper = new ObjectMapper();
-                responseMap = objectMapper.readValue(originalResponse, new TypeReference<Map<String, Object>>() {});
 
+                ObjectMapper objectMapper = new ObjectMapper();
+
+                JsonNode rootNode = objectMapper.readTree(originalResponse);
+                if(rootNode.isArray()){
+                  //todo
+                }
+                if(rootNode.isObject()){
+                    responseMap = objectMapper.readValue(originalResponse, new TypeReference<>() {});
+                }
 
                 response.setEntity(new StringEntity(originalResponse));
             } else {
