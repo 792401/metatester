@@ -1,4 +1,4 @@
-package aop;
+package metatester.aop;
 
 import metatester.report.FaultSimulationReport;
 import org.junit.platform.launcher.TestExecutionListener;
