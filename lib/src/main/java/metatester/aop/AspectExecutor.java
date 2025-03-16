@@ -43,7 +43,6 @@ public class AspectExecutor {
 
         System.out.println("Executing test...");
         Object result = joinPoint.proceed();
-
         if (firstRun) {
             if (originalResponse == null) {
                 throw new IllegalStateException("Original response was not captured. Ensure response interceptors are working.");
@@ -51,8 +50,10 @@ public class AspectExecutor {
             firstRun = false;
             System.out.println("First run completed. Original response captured.");
         }
+
         if(!SimulatorConfig.isTestExcluded(joinPoint.getSignature().getName())){
-            executeWithSimulatedFaults(joinPoint);
+            executeTestWithSimulatedFaults(joinPoint);
+            firstRun=true; //reset flag
         }
 
         return result;
@@ -61,7 +62,7 @@ public class AspectExecutor {
     @Around("execution(* org.apache.http.impl.client.CloseableHttpClient.execute(..))")
     public Object interceptApacheHttpClient(ProceedingJoinPoint joinPoint) throws Throwable {
         Object[] args = joinPoint.getArgs();
-
+        //request
         if (args.length > 0 && args[0] instanceof HttpRequestBase) {
             HttpRequestBase originalRequest = (HttpRequestBase) args[0];
             interceptedUrl = originalRequest.getURI().toString();
@@ -69,12 +70,10 @@ public class AspectExecutor {
             System.out.println("Intercepted URL: " + interceptedUrl);
             if(firstRun){
                 Logger.parseResponse(originalRequest);
-            }
-            if (!firstRun) {
+            } else {
                 URI originalUri = new URI(interceptedUrl);
                 URI redirectedUri = new URI("http", null, "localhost", 8080, originalUri.getPath(), originalUri.getQuery(), null);
                 System.out.println("Redirecting request to: " + redirectedUri);
-
 
                 HttpGet newRequest = new HttpGet(redirectedUri);
                 newRequest.setHeaders(originalRequest.getAllHeaders());
@@ -84,15 +83,14 @@ public class AspectExecutor {
         }
 
         Object result = joinPoint.proceed(args);
-
+        //response
         if (result instanceof HttpResponse) {
             HttpResponse response = (HttpResponse) result;
-
             if (firstRun) {
-
                 originalResponse = EntityUtils.toString(response.getEntity());
-
-                System.out.println("Original response intercepted: " + originalResponse);
+                if (originalResponse == null) {
+                    throw new IllegalStateException("Original response was not captured");
+                }
 
                 ObjectMapper objectMapper = new ObjectMapper();
 
@@ -103,8 +101,8 @@ public class AspectExecutor {
                 if(rootNode.isObject()){
                     responseMap = objectMapper.readValue(originalResponse, new TypeReference<>() {});
                 }
-
                 response.setEntity(new StringEntity(originalResponse));
+
             } else {
                 System.out.println("Rerun response intercepted (simulated fault applied).");
             }
@@ -151,7 +149,7 @@ public class AspectExecutor {
         return result;
     }
 
-    private void executeWithSimulatedFaults(ProceedingJoinPoint joinPoint) throws Throwable {
+    private void executeTestWithSimulatedFaults(ProceedingJoinPoint joinPoint) throws Throwable {
         System.out.println("Executing test reruns with simulated fault responses...");
 
         for(String field: responseMap.keySet()){
