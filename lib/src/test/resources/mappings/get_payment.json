@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPattern": "/payments/[a-zA-Z0-9\\-]+"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"paymentId\": \"payment-123\", \"status\": \"COMPLETED\", \"amount\": 100.00, \"currency\": \"USD\", \"orderId\": \"order-456\"}"
+  }
+}
