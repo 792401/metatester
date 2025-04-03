@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import metatester.config.SimulatorConfig;
+import metatester.http.HTTPFactory;
+import metatester.http.Request;
+import metatester.http.Response;
 import metatester.report.FaultSimulationReport;
 import metatester.report.TestLevelSimulationResults;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -13,25 +16,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Workflow {
-    private Map<String, Object> responseMap = new HashMap<>();
+public class Runner {
     private boolean firstRun = true;
-   private static final Workflow INSTANCE = new Workflow();
+   private static final Runner INSTANCE = new Runner();
 
    private final FaultSimulationReport report = FaultSimulationReport.getInstance();
+   private Response originalResponse;
+   private Request originalRequest;
    private final List<String> faults = SimulatorConfig.getFaults();
-   private String originalResponse;
-   private String interceptedUrl;
 
-    public String getOriginalResponse() {
-        return originalResponse;
-    }
-
-    public void setOriginalResponse(String originalResponse) {
-        this.originalResponse = originalResponse;
-    }
-
-    public static Workflow getInstance(){
+    public static Runner getInstance(){
         return INSTANCE;
     }
 
@@ -43,16 +37,22 @@ public class Workflow {
         this.firstRun = firstRun;
     }
 
-    public String getInterceptedUrl() {
-        return interceptedUrl;
+    public Response getOriginalResponse() {
+        return originalResponse;
     }
 
-    public void setInterceptedUrl(String interceptedUrl) {
-        this.interceptedUrl = interceptedUrl;
+    public void setOriginalResponse(Object originalResponse) {
+        Response response = HTTPFactory.createResponseFrom(originalResponse);
+        this.originalResponse = response;
     }
 
-    public void setResponseMap(Map<String, Object> responseMap) {
-        this.responseMap = responseMap;
+    public Request getOriginalRequest() {
+        return originalRequest;
+    }
+
+    public void setOriginalRequest(Object originalRequest) {
+        Request request = HTTPFactory.createRequestFrom(originalRequest);
+        this.originalRequest = request;
     }
 
     private  void setFieldFault(String field, String fault){
@@ -60,7 +60,7 @@ public class Workflow {
             throw new IllegalStateException("Cannot create simulated fault because originalResponse is null.");
         }
 
-        Map<String, Object> currentResponse = new HashMap<>(responseMap);
+        Map<String, Object> currentResponse = new HashMap<>(originalResponse.getResponseAsMap());
         switch (fault) {
             case "null_field" -> currentResponse.put(field, null);
             case "missing_field" -> currentResponse.remove(field);
@@ -79,8 +79,8 @@ public class Workflow {
 
     public void executeTestWithSimulatedFaults(ProceedingJoinPoint joinPoint) throws Throwable {
         System.out.println("Executing test reruns with simulated fault responses...");
-
-        for(String field: responseMap.keySet()){
+        String interceptedUrl = originalRequest.getUrl();
+        for(String field: originalResponse.getResponseAsMap().keySet()){
             for(String fault: faults){
                 TestLevelSimulationResults testLevelSimulationResults = new TestLevelSimulationResults();
                 testLevelSimulationResults.setTest(joinPoint.getSignature().getName());
@@ -108,7 +108,8 @@ public class Workflow {
     }
 
     private void injectResponseWithSimulatedFault(String responseWithSimulatedFault) {
-        if (this.interceptedUrl == null || interceptedUrl.isEmpty()) {
+        String interceptedUrl = originalRequest.getUrl();
+        if (interceptedUrl == null || interceptedUrl.isEmpty()) {
             throw new IllegalStateException("Intercepted URL is null or empty. Cannot set up WireMock stub.");
         }
 

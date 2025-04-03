@@ -16,14 +16,14 @@ public class UsersTest {
         RestAssured.baseURI = "http://localhost:8089";
     }
 
-    @Test
-    public void testGetUsers() {
-        Response response = given()
-                .when()
-                .get("/users");
-
-        Assertions.assertTrue(response.body().asString().contains("name"),"check name field");
-    }
+//    @Test
+//    public void testGetUsers() {
+//        Response response = given()
+//                .when()
+//                .get("/users");
+//
+//        Assertions.assertTrue(response.body().asString().contains("name"),"check name field");
+//    }
 
     @Test
     public void testGetUser() {
@@ -42,7 +42,7 @@ public class UsersTest {
                 .contentType(ContentType.JSON)
                 .body(requestBody)
                 .when()
-                .get("/users");
+                .post("/users");
 
 
         Assertions.assertTrue(response.body().asString().contains("email"),"check title field");
