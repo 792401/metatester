@@ -72,6 +72,8 @@ dependencies {
     compileOnly("org.aspectj:aspectjtools:1.9.22")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.2")
     testImplementation("org.junit.platform:junit-platform-launcher:1.11.4")
+    // https://mvnrepository.com/artifact/org.mockito/mockito-core
+    testImplementation("org.mockito:mockito-core:5.12.0")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     compileOnly("org.junit.jupiter:junit-jupiter-api:5.6.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
@@ -90,25 +92,23 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        val aspectjAgent = configurations.runtimeClasspath.get().find { it.name.contains("aspectjweaver") }?.absolutePath
-        val runWithMetatester = System.getProperty("runWithMetatester") == "true"
+    val aspectjAgent = configurations.runtimeClasspath.get().find { it.name.contains("aspectjweaver") }?.absolutePath
+    val runWithMetatester = System.getProperty("runWithMetatester") == "true"
 
-        val jvmArguments = mutableListOf(
-            "-Xmx2g",
-            "-Xms512m"
-        )
+    val jvmArguments = mutableListOf(
+        "-Xmx2g",
+        "-Xms512m"
+    )
 
-        if (runWithMetatester && aspectjAgent != null) {
-            jvmArguments.add("-javaagent:${aspectjAgent}")
-            // jvmArguments.addAll(listOf(
-            //     "-Daj.weaving.verbose=true",
-            //     "-Dorg.aspectj.weaver.showWeaveInfo=true",
-            //     "-Dorg.aspectj.matcher.verbosity=5"
-            // ))
-        }
-        jvmArguments.add("-DrunWithMetatester=${System.getProperty("runWithMetatester")}")
-
-        jvmArgs = jvmArguments
+    if (runWithMetatester && aspectjAgent != null) {
+        jvmArguments.add("-javaagent:${aspectjAgent}")
+        // jvmArguments.addAll(listOf(
+        //     "-Daj.weaving.verbose=true",
+        //     "-Dorg.aspectj.weaver.showWeaveInfo=true",
+        //     "-Dorg.aspectj.matcher.verbosity=5"
+        // ))
     }
+    jvmArguments.add("-DrunWithMetatester=${System.getProperty("runWithMetatester")}")
+
+    jvmArgs = jvmArguments
 }
