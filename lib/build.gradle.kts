@@ -88,28 +88,27 @@ dependencies {
     implementation("io.swagger.parser.v3:swagger-parser:2.1.22")
 }
 
-
-//tasks.test {
-//    useJUnitPlatform()
-//    jvmArgs(
-//            "-javaagent:${configurations.compileClasspath.get().find { it.name.contains("aspectjweaver") }?.absolutePath}",
-////            "-Daj.weaving.verbose=true",
-////            "-Dorg.aspectj.weaver.showWeaveInfo=true",
-////            "-Dorg.aspectj.matcher.verbosity=5",
-//            "-Xmx2g", // Increase maximum heap size to 2GB
-//            "-Xms512m" // Set initial heap size to 512MB
-//    )
-//}
 tasks.test {
     useJUnitPlatform()
     doFirst {
-        jvmArgs(
-            "-javaagent:${configurations.runtimeClasspath.get().find { it.name.contains("aspectjweaver") }?.absolutePath}",
-//            "-Daj.weaving.verbose=true",
-//            "-Dorg.aspectj.weaver.showWeaveInfo=true",
-//            "-Dorg.aspectj.matcher.verbosity=5",
+        val aspectjAgent = configurations.runtimeClasspath.get().find { it.name.contains("aspectjweaver") }?.absolutePath
+        val runWithMetatester = System.getProperty("runWithMetatester") == "true"
+
+        val jvmArguments = mutableListOf(
             "-Xmx2g",
             "-Xms512m"
         )
+
+        if (runWithMetatester && aspectjAgent != null) {
+            jvmArguments.add("-javaagent:${aspectjAgent}")
+            // jvmArguments.addAll(listOf(
+            //     "-Daj.weaving.verbose=true",
+            //     "-Dorg.aspectj.weaver.showWeaveInfo=true",
+            //     "-Dorg.aspectj.matcher.verbosity=5"
+            // ))
+        }
+        jvmArguments.add("-DrunWithMetatester=${System.getProperty("runWithMetatester")}")
+
+        jvmArgs = jvmArguments
     }
 }
