@@ -36,9 +36,10 @@ public class AspectExecutor {
             System.out.println("First run completed. Original response captured.");
         }
 
-        if(!SimulatorConfig.isTestExcluded(joinPoint.getSignature().getName())){
-            runner.executeTestWithSimulatedFaults(joinPoint);
-            runner.setFirstRun(true); //reset flag after execution test
+        if(!SimulatorConfig.isTestExcluded(joinPoint.getSignature().getName())
+        && !SimulatorConfig.isEndpointExcluded(runner.getInterceptedUrl())){
+                runner.executeTestWithSimulatedFaults(joinPoint);
+                runner.setFirstRun(true); //reset flag after execution test
         }
 
         return result;

@@ -3,6 +3,7 @@ package metatester.runner;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import metatester.config.FaultCollection;
 import metatester.config.SimulatorConfig;
 import metatester.http.HTTPFactory;
 import metatester.http.Request;
@@ -17,13 +18,14 @@ import java.util.List;
 import java.util.Map;
 
 public class Runner {
-    private boolean firstRun = true;
+   private boolean firstRun = true;
+   private String interceptedUrl;
    private static final Runner INSTANCE = new Runner();
 
    private final FaultSimulationReport report = FaultSimulationReport.getInstance();
    private Response originalResponse;
    private Request originalRequest;
-   private final List<String> faults = SimulatorConfig.getFaults();
+   private final List<FaultCollection> faults = SimulatorConfig.getEnabledFaults();
 
     public static Runner getInstance(){
         return INSTANCE;
@@ -43,6 +45,7 @@ public class Runner {
 
     public void setOriginalResponse(Object originalResponse) {
         Response response = HTTPFactory.createResponseFrom(originalResponse);
+        this.interceptedUrl = response.getUrl();
         this.originalResponse = response;
     }
 
@@ -55,15 +58,19 @@ public class Runner {
         this.originalRequest = request;
     }
 
-    private  void setFieldFault(String field, String fault){
+    public String getInterceptedUrl() {
+        return interceptedUrl;
+    }
+
+    private  void setFieldFault(String field, FaultCollection fault){
         if (originalResponse == null) {
             throw new IllegalStateException("Cannot create simulated fault because originalResponse is null.");
         }
 
         Map<String, Object> currentResponse = new HashMap<>(originalResponse.getResponseAsMap());
         switch (fault) {
-            case "null_field" -> currentResponse.put(field, null);
-            case "missing_field" -> currentResponse.remove(field);
+            case null_field -> currentResponse.put(field, null);
+            case missing_field -> currentResponse.remove(field);
             default -> currentResponse = currentResponse;
         }
         ObjectMapper objectMapper = new ObjectMapper();
@@ -81,7 +88,7 @@ public class Runner {
         System.out.println("Executing test reruns with simulated fault responses...");
         String interceptedUrl = originalRequest.getUrl();
         for(String field: originalResponse.getResponseAsMap().keySet()){
-            for(String fault: faults){
+            for(FaultCollection fault: faults){
                 TestLevelSimulationResults testLevelSimulationResults = new TestLevelSimulationResults();
                 testLevelSimulationResults.setTest(joinPoint.getSignature().getName());
                 setFieldFault(field,fault);
@@ -99,7 +106,7 @@ public class Runner {
                 report.setEndpoint(URI.create(interceptedUrl).getPath())
                         .setTestResult(testLevelSimulationResults)
                         .setField(field)
-                        .setFaultType(fault)
+                        .setFaultType(fault.name())
                         .apply();
             }
         }

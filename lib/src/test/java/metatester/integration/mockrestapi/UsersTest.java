@@ -45,7 +45,7 @@ public class UsersTest {
                 .post("/users");
 
 
-        Assertions.assertTrue(response.body().asString().contains("email"),"check title field");
+        Assertions.assertTrue(response.body().asString().contains("email"),"check email field");
     }
 
 

@@ -3,25 +3,25 @@ package metatester.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class SimulatorConfig {
     public Faults faults;
+
+    public Url url;
     public Endpoints endpoints;
     public Tests tests;
     public Report report;
 
 
     public static class Faults {
-         static class Fault {
+        static class Fault {
             public boolean enabled;
         }
+
         static class DelayInjection extends Fault {
             public int delay_ms;
         }
@@ -35,6 +35,9 @@ public class SimulatorConfig {
         public DelayInjection delay_injection;
     }
 
+    public static class Url {
+        public List<String> exclude;
+    }
     public static class Endpoints {
         public List<String> exclude;
     }
@@ -49,7 +52,7 @@ public class SimulatorConfig {
     }
 
 
-    public static SimulatorConfig getConfig(){
+    private static SimulatorConfig getConfig(){
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         try (InputStream inputStream = SimulatorConfig.class.getClassLoader().getResourceAsStream("config.yml")) {
             if (inputStream == null) {
@@ -61,18 +64,19 @@ public class SimulatorConfig {
         }
     }
 
-    public static List<String> getFaults(){
-        List<String> faults = new ArrayList<>();
+    public static List<FaultCollection> getEnabledFaults(){
+        List<FaultCollection> enabledFaults = new ArrayList<>();
+        Faults faults = getConfig().faults;
 
-        if (getConfig().faults.null_field.enabled) faults.add("null_field");
-        if (getConfig().faults.missing_field.enabled) faults.add("missing_field");
-        if (getConfig().faults.invalid_data_type.enabled) faults.add("invalid_data_type");
-        if (getConfig().faults.http_method_change.enabled) faults.add("http_method_change");
+        if (faults.null_field.enabled) enabledFaults.add(FaultCollection.null_field);
+        if (faults.missing_field.enabled) enabledFaults.add(FaultCollection.missing_field);
+        if (faults.invalid_data_type.enabled) enabledFaults.add(FaultCollection.invalid_value);
+        if (faults.http_method_change.enabled) enabledFaults.add(FaultCollection.http_method_change);
 
-        return faults;
+        return enabledFaults;
     }
-    public static boolean isEndpointExcluded(String endpoint){
 
+    public static boolean isEndpointExcluded(String endpoint){
         return false;
 
     }
