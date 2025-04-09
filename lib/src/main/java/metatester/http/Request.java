@@ -6,7 +6,7 @@ public interface Request {
 
     String getUrl();
     Map<String, Object> getHeaders();
-    String getResponse();
+    String getBody();
 
 
 }
