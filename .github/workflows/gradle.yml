@@ -57,7 +57,7 @@ jobs:
 #        run: ./gradlew clean test --tests "metatester.unit.*" --info -DrunWithMetatester=false
 
   integration_tests:
-    needs: unit_tests
+    # needs: unit_tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
