@@ -7,7 +7,7 @@ import org.junit.platform.launcher.TestPlan;
 public class GlobalTestExecutionListener implements TestExecutionListener {
 
     private static boolean executed = false;
-    private final boolean runWithMetatester = Boolean.getBoolean(System.getProperty("metatest"));
+    private final boolean runWithMetatester = Boolean.parseBoolean(System.getProperty("runWithMetatester"));
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
         if (!executed && runWithMetatester) {
