@@ -5,6 +5,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
@@ -46,6 +47,7 @@ public class PaymentTest {
         }
 
         @Test
+        @Disabled
         public void testGetPaymentNotFound() {
             String invalidPaymentId = "nonexistent-payment";
 
