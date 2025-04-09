@@ -101,10 +101,13 @@ public class FaultSimulationReport {
             if (reportFile.exists()) reportFile.delete();
             objectMapper.writerWithDefaultPrettyPrinter()
                     .writeValue(new File(DEFAULT_REPORT_PATH), report);
+            System.out.println("Saving fault simulation report to file: " + DEFAULT_REPORT_PATH);
         } catch (IOException e) {
             System.err.println("Failed to save report: " + e.getMessage());
         }
     }
+
+
 
     public String toJson() throws IOException {
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(report);
