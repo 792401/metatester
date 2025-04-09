@@ -57,7 +57,7 @@ jobs:
 #        run: ./gradlew clean test --tests "metatester.unit.*" --info -DrunWithMetatester=false
 
   integration_tests:
-    needs: unit_tests
+    # needs: unit_tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -79,9 +79,15 @@ jobs:
       - name: Pull latest WireMock image
         run: docker pull wiremock/wiremock:latest
 
-      - name: Start WireMock server
+      - name: Start a WireMock server for mocked REST api
         run: |
-          docker run -d --name wiremock -p 8089:8080 \
+          docker run -d --name wiremock-mocked-rest-api -p 8089:8080 \
+            -v $GITHUB_WORKSPACE/lib/src/test/resources/mappings:/home/wiremock/mappings \
+            wiremock/wiremock:latest
+
+      - name: Start a WireMock server for Metatester
+        run: |
+          docker run -d --name wiremock-for-metatester -p 8080:8080 \
             -v $GITHUB_WORKSPACE/lib/src/test/resources/mappings:/home/wiremock/mappings \
             wiremock/wiremock:latest
 
