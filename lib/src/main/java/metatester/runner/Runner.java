@@ -110,7 +110,8 @@ public class Runner {
                 report.setEndpoint(URI.create(interceptedUrl).getPath())
                         .setTestResult(testLevelSimulationResults)
                         .setField(field)
-                        .setFaultType(fault.name());
+                        .setFaultType(fault.name())
+                        .apply();
             }
         }
         System.out.println("All test executions (original + simulated faults) are completed.");

@@ -13,7 +13,7 @@ public class GlobalTestExecutionListener implements TestExecutionListener {
         if (!executed && runWithMetatester) {
             executed = true;
             System.out.println("All tests completed - Generating final report...");
-            FaultSimulationReport.getInstance().apply();
+            FaultSimulationReport.getInstance().createJSONReport();
         }
     }
 }
