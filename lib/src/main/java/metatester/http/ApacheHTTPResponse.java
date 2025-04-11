@@ -41,6 +41,11 @@ public class ApacheHTTPResponse implements Response {
     }
 
     @Override
+    public void setBody(String body) {
+        this.body=body;
+    }
+
+    @Override
     public Map<String, Object> getResponseAsMap() {
         return responseAsMap;
     }

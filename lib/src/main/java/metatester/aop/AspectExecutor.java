@@ -53,18 +53,18 @@ public class AspectExecutor {
             HttpRequestBase originalRequest = (HttpRequestBase) args[0];
             runner.setOriginalRequest(originalRequest);
 
-            System.out.println("Intercepted URL: " + runner.getOriginalRequest().getUrl());
+//            System.out.println("Intercepted URL: " + runner.getOriginalRequest().getUrl());
             if(runner.isFirstRun()){
                 Logger.parseResponse(originalRequest);
             } else {
-                URI originalUri = new URI(runner.getOriginalRequest().getUrl());
-                URI redirectedUri = new URI("http", null, "localhost", 8080, originalUri.getPath(), originalUri.getQuery(), null);
-                System.out.println("Redirecting request to: " + redirectedUri);
-
-                HttpGet newRequest = new HttpGet(redirectedUri);
-                newRequest.setHeaders(originalRequest.getAllHeaders());
-
-                args[0] = newRequest;
+//                URI originalUri = new URI(runner.getOriginalRequest().getUrl());
+//                URI redirectedUri = new URI("http", null, "localhost", 8080, originalUri.getPath(), originalUri.getQuery(), null);
+//                System.out.println("Redirecting request to: " + redirectedUri);
+//
+//                HttpGet newRequest = new HttpGet(redirectedUri);
+//                newRequest.setHeaders(originalRequest.getAllHeaders());
+//
+//                args[0] = newRequest;
             }
         }
 
@@ -77,7 +77,10 @@ public class AspectExecutor {
 
                 response.setEntity(new StringEntity(runner.getOriginalResponse().getBody()));
             } else {
+                //run simulations
+                response.setEntity(new StringEntity(runner.getSimulatedResponse().getBody()));
                 System.out.println("Rerun response intercepted (simulated fault applied).");
+                System.out.println(runner.getSimulatedResponse().getBody());
             }
         }
 

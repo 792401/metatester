@@ -24,6 +24,7 @@ public class Runner {
 
    private final FaultSimulationReport report = FaultSimulationReport.getInstance();
    private Response originalResponse;
+   private Response simulatedResponse;
    private Request originalRequest;
    private final List<FaultCollection> faults = SimulatorConfig.getEnabledFaults();
 
@@ -47,11 +48,14 @@ public class Runner {
         Response response = HTTPFactory.createResponseFrom(originalResponse);
         this.interceptedUrl = response.getUrl();
         this.originalResponse = response;
+        this.simulatedResponse = response;
     }
 
     public Request getOriginalRequest() {
         return originalRequest;
     }
+
+    public Response getSimulatedResponse(){return simulatedResponse;};
 
     public void setOriginalRequest(Object originalRequest) {
         Request request = HTTPFactory.createRequestFrom(originalRequest);
@@ -78,7 +82,7 @@ public class Runner {
         try {
             String responseAsString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(currentResponse);
             System.out.println("Simulated fault response created: " + responseAsString);
-            injectResponseWithSimulatedFault(responseAsString);
+            simulatedResponse.setBody(responseAsString);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -106,27 +110,10 @@ public class Runner {
                 report.setEndpoint(URI.create(interceptedUrl).getPath())
                         .setTestResult(testLevelSimulationResults)
                         .setField(field)
-                        .setFaultType(fault.name())
-                        .apply();
+                        .setFaultType(fault.name());
             }
         }
-
         System.out.println("All test executions (original + simulated faults) are completed.");
     }
 
-    private void injectResponseWithSimulatedFault(String responseWithSimulatedFault) {
-        String interceptedUrl = originalRequest.getUrl();
-        if (interceptedUrl == null || interceptedUrl.isEmpty()) {
-            throw new IllegalStateException("Intercepted URL is null or empty. Cannot set up WireMock stub.");
-        }
-
-        String requestPath = URI.create(interceptedUrl).getPath();
-        System.out.println("Setting up WireMock stub for path: " + requestPath);
-
-        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo(requestPath))
-                .willReturn(WireMock.aResponse()
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(responseWithSimulatedFault)
-                        .withStatus(200)));
-    }
 }
