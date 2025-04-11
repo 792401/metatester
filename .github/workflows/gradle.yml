@@ -85,11 +85,6 @@ jobs:
             -v $GITHUB_WORKSPACE/lib/src/test/resources/mappings:/home/wiremock/mappings \
             wiremock/wiremock:latest --port 8089 --verbose
 
-      - name: Start a WireMock server for Metatester
-        run: |
-          docker run -d --name wiremock-for-metatester -p 8080:8080 \
-            wiremock/wiremock:latest
-
       - name: Run Integration Tests
         run: ./gradlew clean test --tests "metatester.integration.*" --info -DrunWithMetatester=true
 
